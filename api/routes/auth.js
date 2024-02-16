@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const User = require('../models/User')
 const bcrypt = require('bcrypt')
+const jwt = require("jsonwebtoken")
 
 
 router.post("/register", async(req, res) => {
@@ -16,6 +17,40 @@ router.post("/register", async(req, res) => {
         const newUser = new User({...req.body, password: hashedPassword})
         const savedUser = await newUser.save()
         res.status(201).json(savedUser)
+    } catch (error) {
+        res.status(500).json(error)
+    }
+})
+
+router.post("/login", async (req,res) => {
+    try {
+        let user;
+        if(req.body.email) {
+            user = await User.findOne({email: req.body.email})
+        }
+        else{
+            user = await User.findOne({username: req.body.username})
+        }
+
+        if(!user) {
+            return res.status(404).json("User not found")
+        }
+        const match = await bcrypt.compare(req.body.password, user.password)
+
+        if(!match) {
+            return res.status(401).json('wrong credentials')
+        }
+        const {password, ...data} = user._doc
+        const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {expiresIn: process.env.JWT_EXPIRE})
+        res.cookie("token", token).status(200).json(data)
+    } catch (error) {
+        res.status(500).json(error)
+    }
+})
+
+router.get("/logout", async(req,res) => {
+    try {
+        res.clearCookie("token",{sameSite: "none", secure:true}).status(200).json("user logout successfully")
     } catch (error) {
         res.status(500).json(error)
     }
