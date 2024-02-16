@@ -56,6 +56,22 @@ router.get("/logout", async(req,res) => {
     }
 })
 
+router.get("/refetch", async(req,res) => {
+    const token = req.cookies.token
+    jwt.verify(token, process.env.JWT_SECRET, {}, async (err, data) => {
+        if(err) {
+            res.status(404).json(err)
+        } 
+        try {
+            const id= data._id
+            const user = await User.findOne({_id: id})
+            res.status(200).json(user)
+        } catch (error) {
+            res.status(500).json(error)
+        }
+    })
+})
+
 
 
 module.exports  = router

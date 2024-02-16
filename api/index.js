@@ -3,11 +3,13 @@ const mongoose = require("mongoose");
 const app = express();
 const dotenv = require("dotenv")
 const authRoute = require('./routes/auth')
+const cookieParser = require("cookie-parser")
 
 
 dotenv.config();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use("/api/auth", authRoute)
 
 mongoose.connect(process.env.MONGO_URL).then(() => {
